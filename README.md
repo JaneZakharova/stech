@@ -7,21 +7,21 @@ stech
 
 {{
 
-function stech_taxar($tid, $act) {
- 
-  $q = db_select('taxonomy_term_data', 'ttd')
-      ->fields('ttd', array('tid', 'name'))
-      ->condition('vid', variable_get('stech_status'))
-      ->orderBy('weight', 'DESC')
-      ->execute();
- 
-  $arstatus0 = array();
- 
-  foreach ($q as $rec) {
- 
-    $arstatus0[$rec->tid] = $rec -> name;
-  }
- 
+    function stech_taxar($tid, $act) {
+     
+      $q = db_select('taxonomy_term_data', 'ttd')
+          ->fields('ttd', array('tid', 'name'))
+          ->condition('vid', variable_get('stech_status'))
+          ->orderBy('weight', 'DESC')
+          ->execute();
+            
+         $arstatus0 = array();
+        
+         foreach ($q as $rec) {
+        
+           $arstatus0[$rec->tid] = $rec -> name;
+         }
+        
   $arstatus = array();
   $arstatus = array_flip($arstatus0);
   $statuskey = array_keys($arstatus0);
