@@ -1,0 +1,5 @@
+name="stech"
+core = "7.x"
+description = "AC сопровождения процесса ремонта компьютерной техники"
+files[]=stech.install
+files[]=stech.module

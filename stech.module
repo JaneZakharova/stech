@@ -1,0 +1,1326 @@
+<?php
+
+function stech_req_ac_form($form,$form_state,$nid,$sid){
+global $user,$base_url;  
+
+
+$form['nid'] = array(
+		'#type' => 'hidden',
+		'#title' => t('нид'),
+		'#size' => 25,	
+		#'#required'=>TRUE,
+		'#default_value'=>$nid,
+
+	);
+	
+$form['sid'] = array(
+		'#type' => 'hidden',
+		'#title' => t('тид'),
+		'#size' => 25,	
+		'#required'=>TRUE,
+		'#default_value'=>$sid, );
+
+if ($sid==13 || $sid==14) {
+		
+drupal_set_title('Небходимо корректно аргументировать причину смены статуса заявки');
+$form['com'] = array(
+		'#type' => 'textarea',
+		'#title' => t('Комментарий'),
+		'#rows' => 7,
+		'#cols' =>17,
+		'#required'=>TRUE,
+		);
+	}
+	
+else {	
+
+$form['com'] = array(
+		'#type' => 'textarea',
+		'#title' => t('Комментарий'),
+		'#rows' => 7,
+		'#cols' =>17,
+
+		);
+	}
+	
+		
+$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Дальше'),
+
+		);		
+		
+return $form;
+}
+
+
+function stech_req_ac_form_submit($form_id, &$form_state){
+global $user,$base_url; 
+ 
+$nid=$form_state['values']['nid'];
+$sid=$form_state['values']['sid'];
+$com=$form_state['values']['com'];
+
+	 db_insert('stech_status_log')      
+	->fields(array(
+		'id' => NULL,		
+		'sid' => $sid,	
+		'nid' => $nid,
+		'uid' => $user->uid,		
+		'comment' => $com,	
+		'date' => time(),	
+		) )
+	->execute();	
+$form_state['redirect']=$base_url.'/pers_cab/'.$user->uid.'/'.$sid;	
+}
+
+
+
+
+function stech_init() {
+  drupal_add_css(drupal_get_path('module', 'stech') .'/stech.css');
+
+} 
+
+function stech_node_info() { 
+  return array(
+    'stech' => array(
+      'name' => 'Регстрация заказа',
+      'base' => 'stech',
+      'description' => 'Создание нового закааза ',
+      'has_title' => TRUE,
+	  'title_label'=> 'test',
+      'has_body' => TRUE,
+      'title_label' => 'Регистрация заказа',
+   ),
+  );
+}
+
+
+
+function stech_permission() { # это уже вроде правильно работает
+  return array(
+    'profile_client' => array(
+      'title' => 'Профиль клиента',          
+      'description' => 'Клиентская часть, анонимко -  как бэ',
+    ),
+
+    'profile_eng' => array(
+      'title' => 'Профиль инженера',          
+      'description' => 'Профиль сотрудника',
+    ),
+  );
+}
+
+function stech_menu() {         # Левое меню(то что слева)
+	$items['logout'] = array(
+		'title' => 'Выход', 
+		'page callback' => 'stech_logout',
+		'access callback' =>TRUE,
+		'access arguments' => array('profile_eng'), 
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 7, 
+	);
+	
+	
+	
+	$items['profile_client'] = array(
+		'title' => 'Клиент[Сабмит... =(]', 
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('stech_profile_client_form'),
+		'access callback' =>TRUE,
+		'access arguments' => array('profile_client'), 
+		'type' => MENU_CALLBACK
+	);
+	
+	$items['stech_req_ac_form/%/%'] = array(
+		'title' => 'Смена статуса заявки', 
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('stech_req_ac_form',1,2),
+		'access callback' =>TRUE,
+		'access arguments' => array('profile_eng'), 
+		'type' => MENU_CALLBACK,
+	);
+	
+	
+	$items['stech_req_rem'] = array(
+		'title' => 'Функция смены статуса на "ремонт"', 
+		'page callback' => 'stech_req_rem',
+		'page arguments' => array(1),
+		'access callback' =>TRUE,
+		'access arguments' => array('profile_eng'), 
+		'type' => MENU_CALLBACK,
+	);
+	
+  
+  	$items['top_req'] = array(
+		'title' => 'Клиент[Сабмит... =(]', 
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('stech_top_req'),
+		'access callback' =>TRUE,
+		'access arguments' => array('profile_eng'), 
+		'type' => MENU_CALLBACK,
+	);
+	
+  
+  /*  $items['node/%'] = array(
+		'title' => 'Переход к ноде', 
+		'page callback' => 'node',
+		'page arguments' => array(1),
+		'access callback' =>TRUE,
+		'access arguments' => array('profile_eng','profile_client'), 
+		'type' => MENU_CALLBACK, 
+	);*/
+  
+	$items['stech_req_rep_client/%'] = array(
+		'title' => 'Отчет', 
+		'page callback' => 'stech_req_rep_client', 
+		'access arguments' => array('profile_eng'), 
+		'access callback' =>TRUE,
+		'page arguments' => array(1),
+		'type' => MENU_LOCAL_TASK,		
+	);
+	
+	
+	$items['stech_rep_act_itog/%'] = array(
+		'title' => 'Отчет', 
+		'page callback' => 'stech_rep_act_itog', 
+		'access arguments' => array('profile_eng'), 
+		'access callback' =>TRUE,
+		'page arguments' => array(1),
+		'type' => MENU_LOCAL_TASK,		
+	);	
+	
+	
+	$items['stech_rep_log_req/%'] = array(
+		'title' => 'Отчет', 
+		'page callback' => 'stech_rep_log_req', 
+		'access arguments' => array('profile_eng'), 
+		'access callback' =>TRUE,
+		'page arguments' => array(1),
+		'type' => MENU_LOCAL_TASK,		
+	);	
+	
+	$items['stech_tek_log_req/%'] = array(
+		'title' => 'Отчет', 
+		'page callback' => 'stech_tek_log_req', 
+		'access arguments' => array('profile_eng'), 
+		'access callback' =>TRUE,
+		'page arguments' => array(1),
+		'type' => MENU_LOCAL_TASK,		
+	);	
+	
+  
+	$items['profile_eng'] = array(
+      'title' => 'Профиль сотрудника', 
+      'page callback' => 'stech_profile_eng_form', 
+      'access arguments' => array('profile_eng'), 
+      'type' => MENU_NORMAL_ITEM, 
+	);
+	
+	$items['pers_cab/%/%'] = array(
+		'title' => 'Личный кабинет с параметром',
+		'page callback' => 'stech_pers_cab',
+		'access arguments' => array('profile_eng'),
+		'page arguments'=>array(1,2),
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 2, 
+	);
+	
+
+	$items['pers_cab'] = array(
+		'title' => 'Личный кабинет',
+		'page callback' => 'stech_pers_cab_menu',
+		'access arguments' => array('profile_eng'),
+		'page arguments'=>array(1,2),
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 2, 
+	);	
+	
+	$items['add_req'] = array(
+		'title' => 'Новая заявка',
+		'page callback' => 'stech_add_req',
+		'access arguments' => array('profile_eng'),
+		'type' => MENU_NORMAL_ITEM,
+		'weight' => 0, 
+	);
+	
+	
+		
+	
+	 $items['fam/autocomplete'] = array(
+		'title' => 'Autocomplete for fam',
+		'page callback' => '_fam_autocomplete',
+		'access arguments' => array('profile_eng'),  
+		'type' => MENU_CALLBACK
+    );
+    
+	
+	 $items['name_cl/autocomplete'] = array(
+		'title' => 'Autocomplete for name',
+		'page callback' => '_name_cl_autocomplete',
+		'access arguments' => array('profile_eng'),  
+		'type' => MENU_CALLBACK
+    );	
+	
+	 $items['otch/autocomplete'] = array(
+		'title' => 'Autocomplete for otch',
+		'page callback' => '_otch_autocomplete',
+		'access arguments' => array('profile_eng'),  
+		'type' => MENU_CALLBACK
+    );		
+	
+		 $items['test'] = array(
+		'title' => 'Autocomplete for otch',
+		'page callback' => 'test',
+
+		'type' => MENU_SUGGESTED_ITEM
+    );	
+       	
+	
+
+	$items['admin/config/system/stech'] = array(
+		'title' => 'Настройки stech`a в конфиге()',
+		'description' =>'Настройки не прописаны, просто  пункт меню и форма сама',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('stech_settings_form'),
+		'access arguments' => array('profile_eng'),
+  );
+
+	$items['act_sdachi'] = array(
+		'title' => 'Отчет о сдаче приемке',
+		
+		'page callback' => 'stech_act_sdaach',
+		'page argumets'=>array(1),
+		'type'=>MENU_CALLBACK,
+  );	
+
+  return $items;
+ }
+ 
+
+function stech_logout() {
+	global $base_url;
+	drupal_goto($base_url.'/user/logout');
+}
+ 
+function stech_menu_link_alter(&$item) {
+global $base_url;
+	if ($item['link_path']=='node/add'){
+		$item['hidden']=1;
+	}
+	
+	if (!user_access('profile_eng')) {
+		if ($item['link_path']==$base_url.'/user/logout'){
+		$item['hidden']=1;
+	}
+	}
+}
+
+function stech_add_req() {
+	global $base_url;
+drupal_goto($base_url.'/node/add/stech');
+	
+}
+
+
+ function stech_pers_cab_menu($form) {
+	 global $user, $base_url;
+	 
+drupal_goto($base_url.'/pers_cab/'.$user->uid.'/9');
+
+
+ }
+
+ 
+ function stech_form($node, &$form_state) { # добавление  данных в поле таблицы через  форму ноды
+ 
+ if ($node->type == 'stech') {
+ 
+ if (!isset($node->fam)) $node->fam = '';            
+ if (!isset($node->name_cl)) $node->name_cl = '';
+ if (!isset($node->otch)) $node->otch = '';
+ if (!isset($node->phone_client)) $node->phone_client = '';
+ if (!isset($node->problem)) $node->problem = '';
+ if (!isset($node->confs)) $node->confs = '';
+ 
+  
+
+  
+ $form['fam'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Фамилия'),
+		'#size' => 25,	
+		#'#required'=>TRUE,
+		'#default_value'=>$node->fam,
+		'#autocomplete_path' => 'fam/autocomplete',
+	);
+	
+  	$form['name_cl'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Имя'),
+		'#size' => 25,	
+		'#required'=>TRUE,
+		'#default_value'=>$node->name_cl,
+        '#autocomplete_path' => 'name_cl/autocomplete',
+		);
+		
+  	$form['otch'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Отчетсво'),
+		'#size' => 25,	
+		'#required'=>TRUE,
+		'#default_value'=>$node->otch,
+        '#autocomplete_path' => 'otch/autocomplete'		
+		);
+	
+	$form['phone_client'] = array(
+		'#type' => 'textfield', 
+		'#title' => t('Телефон клиента'), 
+		'#size' => 25,
+		'#required'=>TRUE,
+		'#default_value'=>$node->phone_client,
+		);	
+ 
+	$form['problem'] = array(  
+		'#type' => 'textarea',  
+		'#title' => t('Описание неисправности'),
+		'#rows' => 5,
+		'#cols' =>25,
+		'#required'=>TRUE,	
+		'#default_value'=>$node->problem,
+	);
+	
+	$form['confs'] = array(  
+		'#type' => 'textarea',  
+		'#title' => t('Конфигурация'),
+		'#rows' => 5,
+		'#cols' =>25,
+		'#required'=>TRUE,	
+		'#default_value'=>$node->confs,
+	);	
+
+  	$form['com'] = array(  
+		'#type' => 'textarea',  
+		'#title' => t('Наличие видимых порвеждений и другие коммментарии'),
+		'#rows' => 5,
+		'#cols' =>25,
+		'#required'=>TRUE,	
+		'#default_value'=>$node->confs,
+	);	 
+
+
+  return $form;
+
+  }
+ }
+ 
+  function stech_test_form() {
+  
+  return 'tst';
+
+}
+
+ function _fam_autocomplete($string) {
+  $matches = array();
+  $result = db_select('stech_zakaz', 'sz')
+    ->fields('sz', array('fam'))
+    ->condition('fam',  db_like($string). '%', 'LIKE')
+    ->execute();
+  foreach ($result as $row) {
+    $matches[$row->fam] = check_plain($row->fam);
+  }
+
+  drupal_json_output($matches);
+}
+
+
+ function _name_cl_autocomplete($string) {
+  $matches = array();
+  $result = db_select('stech_zakaz', 'sz')
+    ->fields('sz', array('name_cl'))
+    ->condition('name_cl',  db_like($string). '%', 'LIKE')
+    ->execute();
+  foreach ($result as $row) {
+    $matches[$row->name_cl] = check_plain($row->name_cl);
+  }
+
+  drupal_json_output($matches);
+}
+
+ function _otch_autocomplete($string) {
+  $matches = array();
+  $result = db_select('stech_zakaz', 'sz')
+    ->fields('sz', array('otch'))
+    ->condition('otch',  db_like($string). '%', 'LIKE')
+    ->execute();
+  foreach ($result as $row) {
+    $matches[$row->otch] = check_plain($row->otch);
+  }
+
+  drupal_json_output($matches);
+}
+
+ 
+function stech_insert($node, &$form_state) {
+ global $user;
+if ($node-> type =='stech') {
+
+ db_insert('stech_zakaz')    
+	->fields(array(
+		'nid' => $node->nid,		
+		'fam' => $node->fam,
+		'name_cl' => $node->name_cl,		
+		'otch' => $node->otch,
+		'phone_client' => $node->phone_client,	
+		'problem' => $node->problem,	
+		'confs' => $node->confs,	
+		'date' =>time(),		
+		))
+	->execute();
+
+ db_insert('stech_status_log')      
+	->fields(array(
+		'id' => NULL,		
+		'sid' => 8,	
+		'nid' => $node->nid,
+		'uid' => $user->uid,		
+		'comment' => $node->com,	
+		'date' => time(),	
+		))
+	->execute(); 
+	}
+	
+}
+	
+
+function stech_load($nodes) {
+  $result = db_query('SELECT * FROM {stech_zakaz} WHERE nid IN (:nid)', array(':nid' => array_keys($nodes)));
+   drupal_set_title( 'page');
+ foreach ($result as $record) {    
+
+	$nodes[$record->nid]->fam = $record->fam;
+ 	$nodes[$record->nid]->name_cl = $record->name_cl;  
+	$nodes[$record->nid]->otch = $record->otch;
+    $nodes[$record->nid]->phone_client = $record->phone_client;
+    $nodes[$record->nid]->problem = $record->problem;
+    $nodes[$record->nid]->confs = $record->confs;
+    $nodes[$record->nid]->date = $record->date;	
+ }
+return $nodes;	
+
+}
+
+function stech_update($node) {
+global $user;
+if ($node->type == 'stech') {
+
+	db_update('stech_zakaz')    
+	->fields(array(
+		'nid' => $node->nid,
+		'fam' => $node->fam,
+		'name_cl' => $node->name_cl,
+		'otch' => $node->otch,
+		'phone_client' => $node->phone_client,
+		'problem' => $node->problem,
+		'confs' => $node->confs,	
+		'date' => time(),	
+		))
+	->condition('nid', $node->nid, '=')
+	->execute();
+/*
+	 db_insert('stech_status_log')      
+	->fields(array(
+		'id' => NULL,		
+		'sid' => taxonomy_term_load(2)->tid,	
+		'nid' => $node->nid,
+		'uid' => $user->uid,		
+		'comment' => 'Подстановка первоначального статуса',	
+		'date' => time(),	
+		))
+	->execute();	*/
+
+	}
+}
+
+function stech_delete($node) {
+
+if ($node-> type == 'stech') {
+	db_delete('stech_zakaz')
+	->condition('nid', $node->nid, '=')
+	->execute();
+}
+}
+
+function stech_theme($existing, $type, $theme, $path) {
+	return array(
+		'stech_full' => array(
+			'template' => 'stech_request_full_node',
+			'variables' => array(
+				'nid'	=> null,
+			),
+		),
+		
+	'stech_min' => array(
+			'template' => 'stech_request_teaser_node',
+			'variables' => array(
+				'nid'	=> null,
+			),
+		),
+	
+	);	
+		
+	}
+
+function stech_node_view($node, $view_mode, $langcode) {
+
+if (user_access ( 'profile_client')) {
+   
+   if ($node->type == 'stech') {
+   
+     if ($view_mode == 'teaser') {
+	 
+      $node->content['stech'] = array(
+        '#markup' => theme('stech_min', array('nid' => $node->nid)),
+        '#weight' => 2,
+      );
+    }
+
+ if (($node->type == 'stech') && ($view_mode == 'full')) {
+     $node->content['stech'] = array(
+      '#markup' => theme('stech_full', array('nid' => $node->nid)),
+     '#weight' => 2,
+   );
+   }
+}
+}
+}
+
+function stech_profile_eng_form() {
+global $user, $base_url;
+
+$name=$user->name;
+
+drupal_set_title("Новые заказы ");
+  	$header = array(
+		#array('data' => 'ид лог запииси'),		
+		array('data' => 'Проблемес'),
+		array('data' => 'Конфиг'),		
+		array('data' => 'Оформитель'),
+		array('data' => 'Дата обновления'),		
+		array('data' => 'Статус'),	
+		array('data' => 'Действия'),		
+		
+	);
+	
+
+$result = db_query("SELECT sl.id,sl.date, sl.sid, sl.uid, 
+sl.nid, z.problem,z.confs FROM {stech_status_log} 
+sl INNER JOIN {stech_zakaz} z ON sl.nid = z.nid GROUP BY sl.nid");
+
+foreach ($result as $records) {	
+
+$status = db_select('stech_status_log','sl')
+			->fields('sl',
+				array('sid'))
+			-> orderBy('sl.date','DESC')
+			->condition('nid',$records->nid,'=')
+			-> range(0,1)
+			->execute()
+			->FetchField();
+		
+	If ($status == 8  || $status == 13 ){ # Бякость
+						 
+$rows[] = array(
+	#	$records->id,
+		$records->problem,
+		$records->confs,
+    	user_load($records->uid)->name,	
+		date('d.m.Y', $records->date),
+		taxonomy_term_load($status)->name,
+		
+ " <a href='stech_req_ac_form/".$records->nid."/".'9'."'><b>Принять</b></a><br>
+<a href='".$base_url."/node/".$records->nid."'>Подробно</a><br>
+  <a href='stech_req_rep_client/".$records->nid."'>Отчет</a><br>" , );	
+	}
+}
+
+if (!isset($rows)) {
+	drupal_set_message('Нет новых заявок');
+		return ' ';		
+		
+	}
+	else
+{	
+	$output = theme('table', array('header' => $header, 'rows' => $rows));
+	return $output;
+}
+}
+
+
+
+
+function stech_pers_cab($uid,$tid) {
+global $user, $base_url;
+
+if ($uid==$user->uid){
+drupal_set_title("Личный кабинет. Категория ".taxonomy_term_load($tid)->name);
+$str='';
+$output=$user->name.'<br><br>';
+$s_l=0;
+$s_n=0;
+
+$output .='<a href='.$base_url.'/pers_cab/'.$user->uid.'/'.'9'.'><li>Принятые</li></a>';
+$output .='<a href='.$base_url.'/pers_cab/'.$user->uid.'/'.'10'.'><li>Диагностика</li></a>';
+$output .='<a href='.$base_url.'/pers_cab/'.$user->uid.'/'.'11'.'><li>Ремонт</li></a>';
+$output .='<a href='.$base_url.'/pers_cab/'.$user->uid.'/'.'14'.'><li>Ожидание клиента</a></li>';
+$output .='<a href='.$base_url.'/pers_cab/'.$user->uid.'/'.'12'.'><li>Закрытые</a></li>';
+
+$header = array(
+		#array('data' => 'ид лог запииси'),		
+		array('data' => 'Проблемес'),
+		array('data' => 'Конфиг'),		
+	#	array('data' => 'Последний обновивший'),
+		array('data' => 'Дата обновления'),		
+		#array('data' => 'Текущий статус'),	
+		array('data' => 'Действия'),				
+	);
+
+$result = db_query("SELECT sl.id,sl.date, sl.sid, sl.uid, 
+sl.nid, z.problem,z.confs FROM {stech_status_log} 
+sl INNER JOIN {stech_zakaz} z ON sl.nid = z.nid GROUP BY sl.nid");
+	switch ($tid) {
+   
+    case 9:
+        $s_n=10;
+        $s_l=13;
+        break;
+        
+    case 10:
+       $s_n=9;
+       $s_l=11;
+        break;
+        
+    case 11:
+        $s_n=10;
+        $s_l=14;
+        break;  
+            
+    case 14:
+        $s_n=12;
+        $s_l=11;
+        break;       
+
+    case 12:
+        $s_n=9;
+        $s_l=13;
+        break;   
+        
+}
+
+foreach ($result as $records) {	
+	
+$status = db_select('stech_status_log','sl')
+			->fields('sl',
+				array('sid'))
+			-> orderBy('sl.date','DESC')
+			->condition('nid',$records->nid,'=')
+			->range(0,1)
+			->execute()
+			->FetchField();
+			
+			
+$uid_t = db_select('stech_status_log','sl')
+			->fields('sl',
+				array('uid'))
+			-> orderBy('sl.date','DESC')
+			->condition('nid',$records->nid,'=')
+			->range(0,1)
+			->execute()
+			->FetchField();			
+ 
+	If ($status==$tid && $uid_t==$uid   && $status<>13 && $status<>8 ) {
+	
+
+$rows[] = array(
+#taxonomy_term_load($status)->name,
+	#	$records->nid,
+		$records->problem,
+		$records->confs,
+		date('d.m.Y',$records->date),		
+    	#user_load($records->uid)->name,	
+'не 9 и не 12',
+" <a href='".$base_url."/stech_req_ac_form/".$records->nid."/".$s_n."'>".taxonomy_term_load($s_n)->name."</a><br>
+<a href='".$base_url."/stech_req_ac_form/".$records->nid."/".$s_l."'>".taxonomy_term_load($s_l)->name."</a><br>
+<a href='".$base_url."/node/".$records->nid."'>Подробно</a><br>",	
+
+);	
+}
+
+	
+	
+}	
+	if (!isset($rows)) {
+		drupal_set_message('У вас нет заявок на этой стадии');
+
+ return $output;		
+		
+	}
+	else
+{	
+	
+$output .= theme('table', array('header' => $header, 'rows' => $rows));
+ return $output;
+	
+}
+
+} # конец 1 ветки ифа на проверку ида пользователя по пришедшму в функцию  параметру
+
+else
+{
+drupal_set_message('У вас нет доступа к личным  кабинетам других пользователей');
+drupal_set_title ('ошибочка доступа..');
+return 'error';
+}
+
+} 
+  
+############### Работа с блоками
+
+function stech_block_info() {    
+          
+  $blocks['look_req_client'] = array(
+    'info' => 'Проверка заказа(клиенту)_STECH', 
+    'cache' => DRUPAL_NO_CACHE,
+	'title' => 'Проверить заказ',
+  );
+  
+  
+   $blocks['stech_top_req'] = array(
+    'info' => 'ТОП 3 послений заявок(инженеру)_STECH', 
+    'cache' => DRUPAL_NO_CACHE,
+	'weight' => 1,
+	'title' => 'Последние заявки',
+  ); 
+  
+    $blocks['stech_info_eng'] = array(
+    'info' => 'Информация  об инженере, типа личного кабинета(инженеру)_STECH', 
+    'cache' => DRUPAL_NO_CACHE,
+	'weight'=> 0,
+	'title' => 'Инфо инженера',
+  );  
+  
+  
+  return $blocks;
+}
+
+
+function stech_block_configure($delta) {     
+         
+$form=array();
+
+switch($delta) {
+
+case 'stech_top_req' :
+	$form['am_out_req'] = array(  
+		'#type' => 'textfield',  
+		'#title' => t('Введите число послдений заявок, которые необходимо отобразить с блоке'),
+		'#size' => 6,
+		'#default_value' => variable_get('am_out_req'),
+	);
+break;	
+$options='';
+	
+case 'stech_info_eng' :
+$tree=taxonomy_get_tree(2);
+
+
+	
+	$options = array(
+		
+		'8' => 'новые',
+		'9' => 'принято',	
+		'10' =>  'диагностика',	
+		'11' => 'ремонт',
+		'12' => 'закрыта',	
+		'13' =>  'отменена',	
+		
+);
+	
+	$form['term'] = array(  
+		'#type' => 'checkboxes',  
+		'#title' => t('Выберете пукнты для отображения'),
+		'#size' => 6,
+		'#options' => $options,
+		'#default_value' => variable_get('term'),	
+	);	
+
+break;		
+	}
+return $form;
+	
+}
+
+
+function  stech_block_save($delta ='', $edit = array()) {
+switch ($delta) {
+	case 'stech_top_req' :
+			variable_set('am_out_req', (int)$edit['am_out_req']);
+	break;
+
+	case 'stech_info_eng' :
+			variable_set('term', $edit['term']);
+	break;
+
+}
+
+return;
+}
+
+
+
+function stech_profile_client_form($form, &$form_state) {
+global $base_url;
+	$form['id_zak'] = array(  
+		'#type' => 'textfield',       
+		#'#prefix'=>'<div class="center_obj">',
+		'#title' => t('Номер заказа'),
+		'#description' => t('Введите номер заказа,</br>'),		
+		'#size' => 25,
+		#'#required'=>TRUE,	
+	);
+			
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => 'Дальше',
+	#	'#suffix' =>'</div>',	
+	);	
+ 
+
+ 
+ 
+$s="<a href=".$base_url."/node/add/page>Обратная связь</a>";
+#$s='<a href="mailto: jane@sustec.ru">Обратная связь</a>';
+
+	$form['#suffix'] = $s;
+return $form;
+}
+
+
+function stech_info_eng() {
+
+global $user,$base_url;
+
+
+$output = 'Пользователь: <b>'.$user->name.'</b><br>';
+$output .= '<a href='.$base_url.'/pers_cab/'.$user->uid.'/'.'9'.'>(Личный кабинет)</a></b>';
+$tree = taxonomy_get_tree(2);
+
+$output .='<br>';
+
+$term=array_filter(variable_get('term'));
+$result = db_query("SELECT  sl.sid 
+					FROM {stech_status_log} sl INNER JOIN {stech_zakaz} z ON sl.nid = z.nid
+					ORDER BY sl.date DESC"); 
+
+
+foreach ($tree as $records) {
+	foreach ($term as $record) {
+	if ($record==$records->tid) {
+	
+$output .=$records->name.'<br>';
+ }
+}
+  
+
+}
+
+return $output;
+}
+
+
+
+function stech_top_req($delta) {
+	global $base_url;
+	$output=" ";
+$am_req=variable_get('am_out_req');	
+
+
+
+$result = db_select('stech_zakaz','z')
+			->fields('z',
+				array('nid','problem'))
+			->orderBy('nid', 'DESC')
+			-> range(0,$am_req)
+			->execute();	
+
+foreach ($result as $records) {	
+
+$status = db_select('stech_status_log','sl')
+			->fields('sl',
+				array('sid'))
+			-> orderBy('sl.date','DESC')
+			->condition('nid',$records->nid,'=')
+			-> range(0,1)
+			->execute()
+			->fetchField();	
+		
+if ($status==8){
+$output .="– <a href =".$base_url."/node/".$records->nid.">".$records->problem."<a/></br>";
+
+}
+}
+
+return $output;
+
+}
+
+
+/*
+function stech_profile_client_form_validate($form, &$form_state) {
+
+$number= $form_state['values']['id_zak'];
+
+if (!is_numeric($number)) {
+drupal_set_message('Введите число');
+
+}
+
+
+}
+*/
+
+
+function stech_profile_client_form_submit($form_id, &$form_state) {
+global $base_url;
+
+	$id_zak=$form_state['values']['id_zak'];
+
+$form_state['redirect']=$base_url.'/node/'.$id_zak;	
+
+}
+
+
+
+function stech_block_view($delta = '') {  
+   
+if (user_access('profile_client')) {
+  $block = array();
+  switch ($delta) {
+	case 'look_req_client':
+    $block['subject'] = t('Это наврно будет заголовок:<br>'); # это ни разу не заголовок =( 
+	$block['content'] = drupal_get_form('stech_profile_client_form');
+break;
+}
+}
+
+if (user_access('profile_eng')) {
+  $block = array();
+switch ($delta) {
+  	case 'stech_info_eng':
+    $block['subject'] = t('Это наврно будет заголовок:<br>'); # это ни разу не заголовок =( 
+	$block['content'] = stech_info_eng();
+break;
+	
+case 'stech_top_req':
+    $block['subject'] = 'Это наврно будет заголовок:<br>'; # это ни разу не заголовок =( 
+	$block['content'] = stech_top_req($delta);
+break;
+}
+}
+
+  return $block;
+
+}
+
+############### Конец работы с блоком 
+
+# Попытка реализовать настройки модуля, фиговая какая то очень попытка
+
+function stech_settings_form($form) {
+ 
+  $defaults = array(
+    'garland_happy' => 1,
+    'garland_shoes' => 0,
+  );
+  $form['stech_shoes'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Чекбокс'),
+
+  );
+    	$form['one'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Пдын'),
+		'#size' => 25,	
+		'#required'=>TRUE,
+
+		);
+
+
+  return $form;
+}
+/*
+function stech_change_status($nid) {
+ db_insert('stech_status_log')      
+	->fields(array(
+		'id' => NULL,		
+		'sid' => 2,	
+		'nid' => $nid,
+		'uid' => $user->uid,		
+		'comment' => 'Test from a function *change status*',	
+		'date' => NULL,	
+		))
+	->execute();	
+return ;
+
+
+}
+*/
+
+function stech_count_req($sid,$uid) {
+
+$nid= db_select('stech_zakaz','z')
+		->fields('z',
+			array('nid'))
+		->execute()
+		->fetchField();
+		
+foreach ($nid as $record) {
+
+
+$result = db_select('stech_status_log', 'sl')
+			->fields('sl',array('sid'))
+			->condition('sid', $sid, '=')
+			->condition('uid', $uid, '=')
+			->condition('nid', $record->nid,'=' )			
+			->orderby('date','DESC')
+			->range(0,1)
+			->countQuery()
+			->execute()
+			->fetchfield();
+	
+	}
+	
+	var_dump($result);
+	if ($result==0) {
+		
+		$q='';
+		}
+	else {
+		
+		$q=' +'.$result;
+	}
+		
+	
+return $q;
+
+
+}
+
+function stech_req_rep_client($nid) {
+ $stech=node_load($nid);
+ drupal_add_css(drupal_get_path('module', 'stech') .'/stech.css');
+    elibfan_libinclude('mpdf', 'mpdf.php');
+
+$result = db_query("SELECT sl.id,sl.date, sl.sid, sl.comment, sl.uid, 
+sl.nid, z.problem,z.confs FROM {stech_status_log} 
+sl INNER JOIN {stech_zakaz} z ON sl.nid = z.nid");
+
+$com_perv= db_select('stech_status_log', 'sl')
+			->fields('sl', array('comment'))
+			->condition('nid',$stech->nid,'=')
+			->condition('sid','8','=')
+			->execute()
+			->fetchfield();
+
+    $mpdf = new mPDF('win-1251', 'A4', 0, '', 9, 15,  16, 16, 9, 9);
+    $mpdf->SetDisplayMode('fullpage');
+   
+$html .= '
+<!DOCTYPE html>
+<html>
+<body>
+<center><h3>Заказ-наряд № '.$stech->nid.' </h3></center>
+<br>
+<br>
+Заказчик:<b>'.$stech->fam.' '.$stech->name_cl.' '.$stech->otch.'</b>
+<br>
+<br>
+Контактный телефон: <b>'.$stech->phone_client.'</b>
+<br>
+<br>
+Вид ремонта:(гарантия,новый, и тд(<i>что то из первчиных каментов</i>))
+<br>
+<br>
+Конфигурация: <b>'.$stech->confs.'</b>
+<br>
+<br>
+Описание неисправности: <b>'.$stech->problem.'</b>
+<br>
+<br>
+
+Видимые повреждения: '.$com_perv.'
+<br>
+<br>
+<br>
+С условями обслуживания, изложенными в квитанции к заказ-наряду согласен _________
+<br>
+<br>
+От лица заказчика сдал ____________
+<br>
+<br>
+От лица заказчика принял ___________
+
+</body>
+
+</html>
+
+';
+
+		$mpdf->WriteHtml($html);
+		$mpdf->Output('dogovor.pdf', 'D');
+
+
+
+}
+
+function stech_rep_act_itog($nid) {
+	 $stech=node_load($nid);
+ drupal_add_css(drupal_get_path('module', 'stech') .'/stech.css');
+    elibfan_libinclude('mpdf', 'mpdf.php');
+
+$result = db_query("SELECT sl.id,sl.date, sl.sid, sl.uid, 
+sl.nid, z.problem,z.confs, sl.comment FROM {stech_status_log} 
+sl INNER JOIN {stech_zakaz} z ON sl.nid = z.nid");
+
+    $mpdf = new mPDF('win-1251', 'A4', 0, '', 9, 15,  16, 16, 9, 9);
+    $mpdf->SetDisplayMode('fullpage');
+   
+$res_diagnos = db_select('stech_status_log','sl')
+		->fields('sl',array('comment'))
+		->orderBy('date','DESC')
+		->condition('nid',$stech->nid,'=')
+		->condition('sid',10,'=')		
+		->range(0,1)
+		->execute();		
+   
+$res_remont = db_select('stech_status_log','sl')
+		->fields('sl',array('comment','date'))
+		->orderBy('date','DESC')
+		->condition('nid',$stech->nid,'=')
+		->condition('sid',11,'=')		
+		->range(0,1)
+		->execute();	
+		
+$res_ojid = db_select('stech_status_log','sl')
+		->fields('sl',array('date'))
+		->orderBy('date','DESC')
+		->condition('nid',$stech->nid,'=')
+		->condition('sid',14,'=')		
+		->range(0,1)
+		->execute()
+		->fetchField();	
+		
+foreach ($res_diagnos  as $rec_dia){
+	$com_dia=$rec_dia->comment;
+	
+}		
+		   
+
+foreach ($res_remont as $rec_rem){
+	$com_rem=$rec_rem->comment;
+	$date_rem=$rec_rem->date;	
+}	 
+   
+
+$html .= '
+<!DOCTYPE html>
+<html>
+<body>
+<center><h3>Акт №'.$stech->nid.' <br> Выполенных работ</h3></center>
+<br>
+<br>
+Заказчик:<b>'.$stech->fam.' '.$stech->name_cl.'</b><br>
+Дата приема:<b> '.date('d.m.Y', $stech->date).'</b><br>
+Дата начала ремонта: <b>'.date('d.m.Y', $date_rem).'</b><br>
+Дата окончания: <b>'.date('d.m.Y', $res_ojid->date).'</b><br>
+<br>
+<br>
+<br>
+Конфигурация системы: <b>'.$stech->confs.'</b>
+<br>
+<br>
+<br>
+Заявленная неисправность со слов клиента: <b>'.$stech->problem.'</b>
+<br>
+<br>
+<br>
+
+Результат диагностики:<b> '.$com_dia.'</b>
+<br>
+<br>
+<br>
+Итог выполенных работ: <b>'.$com_rem.'</b>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+Работы выпонил инженер _____________
+<br>
+<br>
+Аппарат получил,исправность 
+и комплектнность проверил. 
+Претензий не имею.          _______________
+
+<br>
+</body>
+
+</html>';
+		$mpdf->WriteHtml($html);
+		$mpdf->Output('act_vbIp_rabot.pdf', 'D');
+
+}
+
+function stech_tek_log_req($nid) {
+ $stech=node_load($nid);
+ drupal_add_css(drupal_get_path('module', 'stech') .'/stech.css');
+    elibfan_libinclude('mpdf', 'mpdf.php');
+
+$log = db_select('stech_status_log','sl')
+		->fields('sl',array('comment','date'))
+		->orderBy('date','DESC')
+		->condition('nid',$stech->nid,'=')
+		->execute();
+
+
+    $mpdf = new mPDF('win-1251', 'A4', 0, '', 9, 15,  16, 16, 9, 9);
+    $mpdf->SetDisplayMode('fullpage');
+
+
+  $html .= '
+<!DOCTYPE html>
+<html>
+<body>  
+    <table border="1" bordercolor="#цвет рамки" cellpadding="6" cellspacing="0">
+<tr>
+<td>.rrr..</td>
+<td>.rr88r..</td>
+</tr>
+<tr>
+<td>.rrrr..</td>
+</tr>
+</table>
+
+<br><br><br>
+';
+ foreach ($log as $record) {
+$html.=date('d.m.Y',$record->date).' '.$record->comment.'<br>';
+}
+
+
+		$mpdf->WriteHtml($html);
+		$mpdf->Output('tek_log.pdf', 'D');
+	
+}

@@ -1,0 +1,113 @@
+<?php
+
+function stech_schema() {
+  $schema['stech_zakaz'] = array (                     
+	'module'=> 'stech',
+	'description'=> 'Таблица заказа',
+		'fields'=> array(
+		'nid'=> array(
+			'description'=>'ИД записи',
+			'type'=>'serial',
+			'not null' => TRUE),
+		'fam'=> array(
+			'description' =>'Фамилия клиента',          
+			'type'=> 'varchar',
+			'length' => 255,
+			'not null' => TRUE,
+			'default'=> ''),
+		'name_cl'=> array(
+			'description' =>'Имя  клиента',          
+			'type'=> 'varchar',
+			'length' => 255,
+			'not null' => TRUE,
+			'default'=> ''),
+		'otch'=> array(
+			'description' =>'Имя  клиента',          
+			'type'=> 'varchar',
+			'length' => 255,
+			'not null' => TRUE,
+			'default'=> ''),			
+		
+	
+		'phone_client'=> array(
+			'description' =>'Номер телефона клиента',
+			'type'=> 'varchar',
+			'length' => 70,
+			'not null' => TRUE,
+			'default'=> ''),
+
+		'problem'=> array(
+			'description' =>'Описание проблемы',
+			'type'=> 'varchar',
+			'length' => 500,
+			'not null' => TRUE,
+			'default'=> ''),
+
+		'confs'=> array(
+			'description' =>'Конфигурация системы',
+			'type'=> 'varchar',
+			'length' => 600,
+			'not null' => TRUE,
+			'default'=> ''),
+			
+		'date'=> array(
+			'description' =>'Дата приема',
+			'type'=> 'int',
+			'default'=> 0),			
+		),	
+	
+	'primary key' => array('nid'),
+);	
+
+
+$schema['stech_status_log'] = array(
+    'description' => 'История заказов',
+	'module'=> 'stech',
+    'fields' => array(
+		'id' => array(
+			'description' => 'ИД записи',
+			'type' => 'serial', 
+			'unsigned' => TRUE,
+			'not null' => TRUE),
+		'sid' => array(
+			'description' => 'код терма которые выцепляется из такосномии(тид по идее...)',
+			'type'=> 'int',
+			'not null' => TRUE),			
+		'nid' => array(
+			'description' => 'Код заказа, статусы которого отслеживаются в данной записи',
+			'type'=> 'int',
+			'not null' => TRUE),
+		'uid' => array(
+			'description' => 'ИД юзера сменившего статус',
+			'type'=> 'int',
+			'not null' => TRUE),						
+		'comment'=> array(
+			'description' =>'Пометка(комментарий)',
+			'type'=> 'varchar',
+			'length' => 500,
+			'not null' => TRUE,
+			'default'=> ''),
+		'date'=> array(
+			'description' =>'Дата смены статуса',
+			'type'=> 'int',
+
+			'default'=> 0),			
+		),				
+
+		
+	'primary key' => array('id'),
+		);
+		
+	
+return $schema;
+		}
+		
+		
+
+		
+
+function stech_uninstall() {
+	drupal_uninstall_schema('stech_status_log');
+	drupal_uninstall_schema('stech_zakaz');	
+}
+			?>
