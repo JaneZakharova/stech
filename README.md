@@ -5,8 +5,6 @@ stech
 
 Код для продвинутой  шагалки был  написан    чуть  позже.
 
-{{
-
     function stech_taxar($tid, $act) {
      
       $q = db_select('taxonomy_term_data', 'ttd')
@@ -22,29 +20,29 @@ stech
            $arstatus0[$rec->tid] = $rec -> name;
          }
         
-  $arstatus = array();
-  $arstatus = array_flip($arstatus0);
-  $statuskey = array_keys($arstatus0);
+          $arstatus = array();
+          $arstatus = array_flip($arstatus0);
+          $statuskey = array_keys($arstatus0);
  
-  $first = array_shift($statuskey);
-  $last = end($statuskey); 
- 
-  switch ($act) {
-    case 'next':
-        $output = $tid+1; 
-        break;
-    case "prev":
-         $output = $tid-1; ;
-        break;
-    case "first":
-        $output = $first;
-        break;
- 
-    case "last":
+          $first = array_shift($statuskey);
+          $last = end($statuskey); 
+         
+          switch ($act) {
+            case 'next':
+                $output = $tid+1; 
+                break;
+            case "prev":
+                 $output = $tid-1; ;
+                break;
+            case "first":
+                $output = $first;
+                break;
+         
+            case "last":
         $output = $last;
         break; 
-  }
-  return $output;
-}
-
-}}
+          }
+          return $output;
+        }
+        
+        }}
