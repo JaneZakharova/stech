@@ -5,7 +5,7 @@ stech
 
 Код для продвинутой  шагалки был  написан    чуть  позже.
 
-[code]
+{{
 
 function stech_taxar($tid, $act) {
  
@@ -47,4 +47,4 @@ function stech_taxar($tid, $act) {
   return $output;
 }
 
-[/code]
+}}
