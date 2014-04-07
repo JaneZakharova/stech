@@ -5,6 +5,8 @@ stech
 
 Код для продвинутой  шагалки был  написан    чуть  позже.
 
+[code]
+
 function stech_taxar($tid, $act) {
  
   $q = db_select('taxonomy_term_data', 'ttd')
@@ -44,3 +46,5 @@ function stech_taxar($tid, $act) {
   }
   return $output;
 }
+
+[/code]
